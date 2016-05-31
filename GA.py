@@ -1,4 +1,5 @@
 import random
+from operator import attrgetter
 
 #Class of individuals
 class Individual:
@@ -25,9 +26,10 @@ class Individual:
 #Class of Genetic Algorithm
 class GA:
 	#
-	def __init__(self, geneSize, populationSize, variability, mutation, fraction, objFunction):
+	def __init__(self, geneSize, populationSize, generation,variability, mutation, fraction, objFunction):
 		self.geneSize = geneSize
 		self.populationSize = populationSize
+		self.generation = generation
 		self.variability = variability
 		self.mutation = mutation
 		self.fraction = fraction
@@ -43,7 +45,7 @@ class GA:
 	def initializePopulation(self):
 		return [self.generateIndividual() for x in xrange(self.populationSize)]
 
-	def computeFitness(self, population):
+	def evaluate(self, population):
 		for i in population:
 			i.setScore(self.objFunction)
 		return population
@@ -87,26 +89,51 @@ class GA:
 
 		return nextGeneration
 
+	def mutate(self, nextGeneration):
+		r = int(self.mutation * self.populationSize)
+		for i in xrange(r):
+			chosenIndividual = random.choice(nextGeneration)
+			chosenChromossome = random.randint(0, self.geneSize-1)
+			chosenValue = random.randint(1, self.variability)
+			nextGeneration.remove(chosenIndividual)
+			aux = list(chosenIndividual.gene)
+			aux[chosenChromossome] = str(chosenValue)
+			nextGeneration.append(Individual("".join(aux)))
+		return nextGeneration
+
+	def run(self):
+		k = 0
+		p = self.initializePopulation()
+		p = self.evaluate(p)
+
+		print("------Start Generation------")
+		for i in p:
+			print(i)
+
+		while(max(p, key=attrgetter('score')) < (self.variability*self.geneSize) and k < self.generation):
+
+			k = k + 1
+			c = test.copy(p)
+			p = test.crossover(p, c)
+			p = test.mutate(p)
+			p = self.evaluate(p)
+
+			#print("------New Generation------")
+			#for i in p:
+			#	print(i)
+
+		print("------Last Generation------")
+		for i in p:
+			print(i)
+			
+		print("FINAL RESULT")
+		return max(p, key=attrgetter('score'))
+
 #Test section
 
 #Objective Function definition
 def objFunction(string):
 	return sum(int(x) for x in string)
 
-test = GA(20, 10, 4, 0, 0.5, objFunction)
-pop = test.initializePopulation()
-pop = test.computeFitness(pop)
-
-print("------Start Generation------")
-for p in pop:
-	print(p)
-
-print("-------Copy---------")
-copy = test.copy(pop)
-for p in copy:
-	print(p)
-
-print("-------Crossover---------")
-cross = test.crossover(pop, copy)
-for p in cross:
-	print(p)
+test = GA(20, 100, 3000, 4, 0.2, 0.5, objFunction)
+print(test.run())
