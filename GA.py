@@ -26,10 +26,10 @@ class Individual:
 #Class of Genetic Algorithm
 class GA:
 	#
-	def __init__(self, geneSize, populationSize, generation,variability, mutation, fraction, objFunction):
+	def __init__(self, geneSize, populationSize, breed,variability, mutation, fraction, objFunction):
 		self.geneSize = geneSize
 		self.populationSize = populationSize
-		self.generation = generation
+		self.breed = breed
 		self.variability = variability
 		self.mutation = mutation
 		self.fraction = fraction
@@ -62,20 +62,19 @@ class GA:
 	def copy(self, population):
 		nCopy = int((1.0-self.fraction) * self.populationSize)
 		copyPopulation = [p for p in population]
-		nextGeneration = []
+		nextBreed = []
 
 		for i in xrange(nCopy):
 			indiv = self.roulleteSelection(copyPopulation)
-			nextGeneration.append(indiv)
+			nextBreed.append(indiv)
 			copyPopulation.remove(indiv)
 
-		return nextGeneration
+		return nextBreed
 
 	def onePoint(self, indiv1, indiv2):
 		return Individual(indiv1[:(len(indiv1)/2)] + indiv2[(len(indiv2)/2):])
 
-	def crossover(self, population, nextGeneration):
-
+	def crossover(self, population, nextBreed):
 		nChildrens = int(self.fraction * self.populationSize)
 
 		for i in xrange(nChildrens):
@@ -85,55 +84,50 @@ class GA:
 			copyPopulation.remove(parent1)
 			parent2 = self.roulleteSelection(copyPopulation)
 
-			nextGeneration.append(self.onePoint(parent1, parent2))
+			nextBreed.append(self.onePoint(parent1, parent2))
 
-		return nextGeneration
+		return nextBreed
 
-	def mutate(self, nextGeneration):
+	def mutate(self, nextBreed):
 		r = int(self.mutation * self.populationSize)
+		
 		for i in xrange(r):
-			chosenIndividual = random.choice(nextGeneration)
+			chosenIndividual = random.choice(nextBreed)
 			chosenChromossome = random.randint(0, self.geneSize-1)
 			chosenValue = random.randint(1, self.variability)
-			nextGeneration.remove(chosenIndividual)
+			nextBreed.remove(chosenIndividual)
 			aux = list(chosenIndividual.gene)
 			aux[chosenChromossome] = str(chosenValue)
-			nextGeneration.append(Individual("".join(aux)))
-		return nextGeneration
+			nextBreed.append(Individual("".join(aux)))
+
+		return nextBreed
 
 	def run(self):
 		k = 0
 		p = self.initializePopulation()
 		p = self.evaluate(p)
 
-		print("------Start Generation------")
+		print("------Start Breed------")
 		for i in p:
 			print(i)
 
-		while(max(p, key=attrgetter('score')) < (self.variability*self.geneSize) and k < self.generation):
+		print("------Best on First Breed------")
+		print(max(p, key=attrgetter('score')))
 
+		while(k < self.breed):
 			k = k + 1
-			c = test.copy(p)
-			p = test.crossover(p, c)
-			p = test.mutate(p)
+			c = self.copy(p)
+			p = self.crossover(p, c)
+			p = self.mutate(p)
 			p = self.evaluate(p)
 
-			#print("------New Generation------")
-			#for i in p:
-			#	print(i)
-
-		print("------Last Generation------")
+		print("------Last Breed------")
 		for i in p:
 			print(i)
-			
+
 		print("FINAL RESULT")
 		return max(p, key=attrgetter('score'))
 
 #Test section
 
 #Objective Function definition
-def objFunction(string):
-	return sum(int(x) for x in string)
-
-test = GA(20, 100, 3000, 4, 0.2, 0.5, objFunction)
-print(test.run())
