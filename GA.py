@@ -126,7 +126,9 @@ class GA:
 			print(i)
 
 		print("FINAL RESULT")
-		return max(p, key=attrgetter('score'))
+		best = max(p, key=attrgetter('score'))
+		print(best)
+		return best
 
 #Test section
 
