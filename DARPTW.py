@@ -19,10 +19,10 @@ class Car:
 		self.indx = indx
 		self.position = position
 		self.capacity = capacity
-		self.availableSeats = capacity
+		self.load = capacity
 
 	def __str__(self):
-		return "Car %d: Position -> %s Capacity -> %s Avaible Seats -> %s" % (self.indx, self.position, self.capacity, self.availableSeats)
+		return "Car %d: Position -> %s Capacity -> %s Avaible Seats -> %s" % (self.indx, self.position, self.capacity, str(self.capacity-self.load))
 
 def initialize():
 	return [Car(i, carPos[i], 5) for i in xrange(len(carPos))]
