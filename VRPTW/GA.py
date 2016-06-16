@@ -129,7 +129,3 @@ class GA:
 		best = max(p, key=attrgetter('score'))
 		print(best)
 		return best
-
-#Test section
-
-#Objective Function definition
