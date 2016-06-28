@@ -25,7 +25,7 @@ class Individual:
 
 #Class of Genetic Algorithm
 class GA:
-	#
+	
 	def __init__(self, geneSize, populationSize, breed,variability, mutation, fraction, objFunction):
 		self.geneSize = geneSize
 		self.populationSize = populationSize
@@ -78,11 +78,11 @@ class GA:
 		nChildrens = int(self.fraction * self.populationSize)
 
 		for i in xrange(nChildrens):
-			copyPopulation = [p for p in population]
+			parent1 = self.roulleteSelection(population)
+			parent2 = self.roulleteSelection(population)
 
-			parent1 = self.roulleteSelection(copyPopulation)
-			copyPopulation.remove(parent1)
-			parent2 = self.roulleteSelection(copyPopulation)
+			while(parent2 == parent1):
+				parent2 = self.roulleteSelection(population)
 
 			nextBreed.append(self.onePoint(parent1, parent2))
 

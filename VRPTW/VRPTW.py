@@ -1,4 +1,5 @@
 class Request:
+
 	def __init__(self, indx, origin, destination, eStart, lStart, eEnd, lEnd):
 		self.indx = indx
 		self.origin = origin
@@ -7,11 +8,13 @@ class Request:
 		self.lStart = lStart
 		self.eEnd = eEnd
 		self.lEnd = lEnd
+		self.car = None
 
 	def __str__(self):
 		return "Request %d: %s to %s [%f,%f] [%f, %f]" % (self.indx, self.origin, self.destination, self.eStart, self.lStart, self.eEnd, self.lEnd)
 
 class Car:
+
 	def __init__(self, indx, position, capacity):
 		self.indx = indx
 		self.position = position

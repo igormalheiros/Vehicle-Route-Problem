@@ -1,9 +1,48 @@
 from VRPTW import *
+from sets import Set
 from readInput import readInput
 from GA import GA
 
 def initialize():
-	return [Car(i, carPos[i], 5) for i in xrange(len(carPos))]
+	return [Car(i+1, carPos[i], 5) for i in xrange(len(carPos))]
+
+def shrinkTimeWindow(accepteds):
+	for car in accepteds:
+		for i in range(len(accepteds[car])):
+			current = accepteds[car][i]
+			cost = graph[(current.origin, current.destination)]
+
+			#the earliest timeEnd is at least the earliest timeStart + cost
+			accepteds[car][i].eEnd =   max(accepteds[car][i].eEnd, accepteds[car][i].eStart+cost)
+			accepteds[car][i].eStart = max(accepteds[car][i].eEnd-cost, accepteds[car][i].eStart)
+
+	#Look for intersection between fallowed requisitions and shrink the time table in order to attend both
+	for car in accepteds:
+		for i in range(len(accepteds[car])):
+
+			if( (i+1) < (len(accepteds[car])) ):
+				current = accepteds[car][i]
+				next = accepteds[car][i+1]
+				cost = graph[(current.origin, current.destination)]
+
+				current.eEnd = next.eStart = max(current.eEnd, next.eStart)
+				current.lEnd = next.lStart = min(current.lEnd, next.lStart)
+
+				if( checkTimeWindow(current, cost) ):
+					accepteds[car][i] = current
+				if( checkTimeWindow(next, cost) ):
+					accepteds[car][i+1] = next
+
+	
+	for car in accepteds:
+		for i in range(len(accepteds[car])):
+			current = accepteds[car][i]
+			cost = graph[(current.origin, current.destination)]
+
+			accepteds[car][i].eEnd =   max(accepteds[car][i].eEnd, accepteds[car][i].eStart+cost)
+			accepteds[car][i].eStart = max(accepteds[car][i].eEnd-cost, accepteds[car][i].eStart)
+	
+	return accepteds
 
 def checkTimeWindow(req, cost):
 	eStart = req.eStart
@@ -19,36 +58,59 @@ def checkTimeWindow(req, cost):
 def objFunction(string):
 	cars = initialize()
 
-	k = 0
-	score = 1
+	#split the requests by each car
+	assigns = {}
+	for i in xrange(len(string)):
+		if(string[i] in assigns):
+			assigns[string[i]].append(requests[i])
+		else:
+			assigns[string[i]] = [requests[i]]
 
-	for r in string:
-		carId = int(r)-1
-		req = requests[k]
-		#check if the car is in position of requisition and if it's possible to deleviry in latest time
-		if(cars[carId].position == req.origin and
-			checkTimeWindow(req, graph[(req.origin,req.destination)]) ):
-			score = score + 1
-			cars[carId].position = req.destination
-		k = k+1
+	score = 1
+	for c in assigns:
+		timeStart = 0
+		for r in assigns[c]:
+			#Check if the car is in the correct position on time and if it is possible reach the destination in time
+			if ( (r.origin == cars[int(c)-1].position) and
+				 (checkTimeWindow(r, graph[(r.origin, r.destination)])) and
+				 (timeStart <= r.lStart) ):
+
+				score = score + 1
+				timeStart = r.eEnd
+				cars[int(c)-1].position = r.destination
 
 	return score
 
-def wrongAssigment(string):
+def measure(string):
 	cars = initialize()
-	wrong = []
-	k = 0
-	for r in string:
-		carId = int(r)-1
-		req = requests[k]
-		if(cars[carId].position == req.origin and
-			checkTimeWindow(req, graph[(req.origin,req.destination)]) ):
-			cars[carId].position = req.destination
-		else:
-			wrong.append(k+1)
-		k = k + 1
 
-	return wrong
+	#split the requests by each car
+	assigns = {}
+	for i in xrange(len(string)):
+		if(string[i] in assigns):
+			assigns[string[i]].append(requests[i])
+		else:
+			assigns[string[i]] = [requests[i]]
+
+	decline = []
+	accepted = {key: [] for key in string}
+
+	for c in assigns:
+		timeStart = 0
+		for r in assigns[c]:
+			#Check if the car is in the correct position on time and if it is possible reach the destination in time
+			if ( (r.origin == cars[int(c)-1].position) and
+				 (checkTimeWindow(r, graph[(r.origin, r.destination)])) and
+				 (timeStart <= r.eStart) ):
+
+				timeStart = r.eEnd
+				cars[int(c)-1].position = r.destination
+				accepted[c].append(r)
+			else:
+				decline.append(r)
+
+	accepted = shrinkTimeWindow(accepted)
+	return(cars,accepted,decline)
 
 #Cars starts posistions, graph and request files
 
@@ -73,14 +135,20 @@ best = test.run()
 
 #Outputs
 print("\n>>>> BEST ASSIGMENT <<<< \n%s" % best)
-cars = initialize()
-wrongs = wrongAssigment(best)
+(cars, accepteds, declines) = measure(best)
 
 print("\n>>>> CARS FINAL POSITIONS <<<<\n")
 for c in cars:
 	print("%d in position %s" % (c.indx, c.position))
 
+print("\n>>>> ACCEPTED REQUISITIONS <<<<\n")
+for c in accepteds:
+	for acc in accepteds[c]:
+		print("%s was possible to car %s" % (acc,c))
+
+
 print("\n>>>> NOT ACCEPTED REQUISITIONS <<<<\n")
-for w in wrongs:
-	print("Requisition %d was not possible" % w)
-print("\nTotal of accepted requisitions: %d/%d" % ((len(best)-len(wrongs)), len(best)))
+for d in declines:
+	print("%s was not possible" % d)
+print("\nTotal of accepted requisitions: %d/%d" % ((len(best)-len(declines)), len(best)))
+print("Cars used %s %d/%d" % (Set(best), len(Set(best)), len(carPos)) )
