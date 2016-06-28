@@ -1,3 +1,4 @@
+from copy import deepcopy
 from VRPTW import *
 from sets import Set
 from readInput import readInput
@@ -6,7 +7,7 @@ from GA import GA
 def initialize():
 	return [Car(i+1, carPos[i], 5) for i in xrange(len(carPos))]
 
-def shrinkTimeWindow(accepteds):
+def shrinkByFeasible(accepteds):
 	for car in accepteds:
 		for i in range(len(accepteds[car])):
 			current = accepteds[car][i]
@@ -16,33 +17,29 @@ def shrinkTimeWindow(accepteds):
 			accepteds[car][i].eEnd =   max(accepteds[car][i].eEnd, accepteds[car][i].eStart+cost)
 			accepteds[car][i].eStart = max(accepteds[car][i].eEnd-cost, accepteds[car][i].eStart)
 
+	return accepteds
+def shrinkByIntersection(accepteds):
+	print("\n\nSHRINK BY INTERSECTION\n\n")
+
 	#Look for intersection between fallowed requisitions and shrink the time table in order to attend both
 	for car in accepteds:
 		for i in range(len(accepteds[car])):
-
 			if( (i+1) < (len(accepteds[car])) ):
-				current = accepteds[car][i]
-				next = accepteds[car][i+1]
+				current = deepcopy(accepteds[car][i])
+				next = deepcopy(accepteds[car][i+1])
 				cost = graph[(current.origin, current.destination)]
 
 				current.eEnd = next.eStart = max(current.eEnd, next.eStart)
 				current.lEnd = next.lStart = min(current.lEnd, next.lStart)
 
-				if( checkTimeWindow(current, cost) ):
+				#CHECK IF MAKE SENSE!!!!!
+				if( checkTimeWindow(current, cost) and checkTimeWindow(next, cost)):
 					accepteds[car][i] = current
-				if( checkTimeWindow(next, cost) ):
 					accepteds[car][i+1] = next
-
-	
-	for car in accepteds:
-		for i in range(len(accepteds[car])):
-			current = accepteds[car][i]
-			cost = graph[(current.origin, current.destination)]
-
-			accepteds[car][i].eEnd =   max(accepteds[car][i].eEnd, accepteds[car][i].eStart+cost)
-			accepteds[car][i].eStart = max(accepteds[car][i].eEnd-cost, accepteds[car][i].eStart)
-	
 	return accepteds
+
+def shrinkTimeWindow(accepteds):
+	return (shrinkByFeasible(shrinkByIntersection(shrinkByFeasible(accepteds))))
 
 def checkTimeWindow(req, cost):
 	eStart = req.eStart
@@ -50,10 +47,10 @@ def checkTimeWindow(req, cost):
 	eEnd = req.eEnd
 	lEnd = req.lEnd
 
-	return ( ( (eStart+cost) <= eEnd <= (lStart+cost) ) or
-			 ( (eStart+cost) <= lEnd <= (lStart+cost) )  or
-			 ( eEnd <= (eStart+cost) <= lEnd) or
-			 ( eEnd <= (lStart+cost) <= lEnd) )
+	return (  ( (eStart+cost) <= eEnd <= (lStart+cost) ) or
+			  ( (eStart+cost) <= lEnd <= (lStart+cost) )  or
+			  ( eEnd <= (eStart+cost) <= lEnd) or
+			  ( eEnd <= (lStart+cost) <= lEnd) )
 
 def objFunction(string):
 	cars = initialize()
@@ -135,7 +132,7 @@ best = test.run()
 
 #Outputs
 print("\n>>>> BEST ASSIGMENT <<<< \n%s" % best)
-(cars, accepteds, declines) = measure(best)
+(cars, accepteds, declines) = measure("11124")
 
 print("\n>>>> CARS FINAL POSITIONS <<<<\n")
 for c in cars:
@@ -152,3 +149,5 @@ for d in declines:
 	print("%s was not possible" % d)
 print("\nTotal of accepted requisitions: %d/%d" % ((len(best)-len(declines)), len(best)))
 print("Cars used %s %d/%d" % (Set(best), len(Set(best)), len(carPos)) )
+
+print(checkTimeWindow(Request(1,'a', 'b', 8, 9, 10, 10), 0.5))
