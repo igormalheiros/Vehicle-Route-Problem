@@ -19,7 +19,6 @@ def shrinkByFeasible(accepteds):
 
 	return accepteds
 def shrinkByIntersection(accepteds):
-	print("\n\nSHRINK BY INTERSECTION\n\n")
 
 	#Look for intersection between fallowed requisitions and shrink the time table in order to attend both
 	for car in accepteds:
@@ -33,9 +32,10 @@ def shrinkByIntersection(accepteds):
 				current.lEnd = next.lStart = min(current.lEnd, next.lStart)
 
 				#CHECK IF MAKE SENSE!!!!!
-				if( checkTimeWindow(current, cost) and checkTimeWindow(next, cost)):
-					accepteds[car][i] = current
-					accepteds[car][i+1] = next
+				if( checkTimeWindow(current, cost)):
+					accepteds[car][i] = deepcopy(current)
+				if( checkTimeWindow(next, cost)):
+					accepteds[car][i+1] = deepcopy(next)
 	return accepteds
 
 def shrinkTimeWindow(accepteds):
@@ -132,7 +132,7 @@ best = test.run()
 
 #Outputs
 print("\n>>>> BEST ASSIGMENT <<<< \n%s" % best)
-(cars, accepteds, declines) = measure("11124")
+(cars, accepteds, declines) = measure(best)
 
 print("\n>>>> CARS FINAL POSITIONS <<<<\n")
 for c in cars:
