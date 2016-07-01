@@ -1,1 +1,4 @@
-Cork Blarney Limerick Cobh
+Cork 5
+Blarney 5
+Limerick 5
+Cobh 5

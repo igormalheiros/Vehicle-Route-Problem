@@ -1,4 +1,4 @@
-from VRPTW import Request
+from VRPTW import *
 
 class readInput:
 	
@@ -15,6 +15,18 @@ class readInput:
 			graph[(source,target)] = float(cost)
 		return graph
 
+
+	def buildSimpleRequests(self):
+		requests = []
+		t = self.txt.readlines()
+		i = 1
+		for line in t:
+			(source, target, eStart, eEnd, capacity) = line.split()
+			requests.append(SimpleRequest(i, source, target, float(eStart), float(eEnd), int(capacity)))
+			i += 1
+		requests.sort(key=lambda x : x.eStart)
+		return requests
+
 	def buildRequests(self):
 		requests = []
 		t = self.txt.readlines()
@@ -22,8 +34,16 @@ class readInput:
 		for line in t:
 			(source, target, eStart, lStart, eEnd, lEnd) = line.split()
 			requests.append(Request(i, source, target, float(eStart), float(lStart), float(eEnd), float(lEnd)))
-			i = i + 1
+			i += 1
+
 		return requests
 
 	def buildCarsPositions(self):
-		return self.txt.read().split()
+		cars = []
+		i = 1
+		t = self.txt.readlines()
+		for line in t:
+			(position, capacity) = line.split()
+			cars.append(Car(i,position, capacity))
+			i += 1
+		return cars

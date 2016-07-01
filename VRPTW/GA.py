@@ -37,9 +37,9 @@ class GA:
 		self.totalScore = 0
 
 	def generateIndividual(self):
-		gene = ""
+		gene = []
 		for i in xrange(self.geneSize):
-			gene += str(random.randint(1, self.variability))
+			gene.append(random.randint(1, self.variability))
 		return Individual(gene)
 
 	def initializePopulation(self):
@@ -96,9 +96,9 @@ class GA:
 			chosenChromossome = random.randint(0, self.geneSize-1)
 			chosenValue = random.randint(1, self.variability)
 			nextBreed.remove(chosenIndividual)
-			aux = list(chosenIndividual.gene)
-			aux[chosenChromossome] = str(chosenValue)
-			nextBreed.append(Individual("".join(aux)))
+
+			chosenIndividual.gene[chosenChromossome] = chosenValue
+			nextBreed.append(chosenIndividual)
 
 		return nextBreed
 
