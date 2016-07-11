@@ -10,7 +10,8 @@ class SimpleRequest:
 		self.car = None
 
 	def __str__(self):
-		return "Request %d: %s to %s [%f] [%f] with %s passengers" % (self.indx, self.startLocation, self.endLocation, self.eStart, self.eEnd, self.passengers)	
+		#return "%s %s %d:%02d %d:%02d %d" % (self.startLocation, self.endLocation, self.eStart/60,self.eStart%60, self.eEnd/60,self.eEnd%60, self.passengers)	
+		return "Request %d: %s to %s [%d:%02d] [%d:%02d] with %d passengers" % (self.indx, self.startLocation, self.endLocation, self.eStart/60,self.eStart%60, self.eEnd/60,self.eEnd%60, self.passengers)
 
 class Request:
 

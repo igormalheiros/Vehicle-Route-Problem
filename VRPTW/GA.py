@@ -71,6 +71,16 @@ class GA:
 
 		return nextBreed
 
+	def nPoint(self, indiv1, indiv2):
+		individual = []
+		for i in range(len(indiv1)):
+			bit = random.randint(0,1)
+			if(bit == 0):
+				individual.append(indiv1[i])
+			else:
+				individual.append(indiv2[i])
+		return Individual(individual)
+
 	def onePoint(self, indiv1, indiv2):
 		return Individual(indiv1[:(len(indiv1)/2)] + indiv2[(len(indiv2)/2):])
 
@@ -84,7 +94,7 @@ class GA:
 			while(parent2 == parent1):
 				parent2 = self.roulleteSelection(population)
 
-			nextBreed.append(self.onePoint(parent1, parent2))
+			nextBreed.append(self.nPoint(parent1, parent2))
 
 		return nextBreed
 
@@ -103,6 +113,7 @@ class GA:
 		return nextBreed
 
 	def run(self):
+		bestOnBreed = []
 		k = 0
 		p = self.initializePopulation()
 		p = self.evaluate(p)
@@ -120,12 +131,15 @@ class GA:
 			p = self.crossover(p, c)
 			p = self.mutate(p)
 			p = self.evaluate(p)
+			b = max(p, key=attrgetter('score'))
+			print("%d %s" % (k,b))
+			bestOnBreed.append(b)
 
 		print("------Last Breed------")
 		for i in p:
 			print(i)
 
 		print("FINAL RESULT")
-		best = max(p, key=attrgetter('score'))
+		best = max(bestOnBreed, key=attrgetter('score'))
 		print(best)
 		return best

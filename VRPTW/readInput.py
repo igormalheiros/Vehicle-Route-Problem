@@ -22,7 +22,12 @@ class readInput:
 		i = 1
 		for line in t:
 			(source, target, eStart, eEnd, capacity) = line.split()
-			requests.append(SimpleRequest(i, source, target, float(eStart), float(eEnd), int(capacity)))
+			eStart = eStart.split(":")
+			eEnd = eEnd.split(":")
+			eStart = int(eStart[0])*60 + int(eStart[1])
+			eEnd = int(eEnd[0])*60 + int(eEnd[1])
+
+			requests.append(SimpleRequest(i, source, target, eStart, eEnd, int(capacity)))
 			i += 1
 		requests.sort(key=lambda x : x.eStart)
 		return requests
