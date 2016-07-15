@@ -37,8 +37,16 @@ class readInput:
 		t = self.txt.readlines()
 		i = 1
 		for line in t:
-			(source, target, eStart, lStart, eEnd, lEnd) = line.split()
-			requests.append(Request(i, source, target, float(eStart), float(lStart), float(eEnd), float(lEnd)))
+			(source, target, eStart, lStart, eEnd, lEnd, passangers) = line.split()
+			eStart = eStart.split(":")
+			lStart = lStart.split(":")
+			eEnd = eEnd.split(":")
+			lEnd = lEnd.split(":")
+			eStart = int(eStart[0])*60 + int(eStart[1])
+			lStart = int(lStart[0])*60 + int(lStart[1])
+			eEnd = int(eEnd[0])*60 + int(eEnd[1])
+			lEnd = int(lEnd[0])*60 + int(lEnd[1])
+			requests.append(Request(i, source, target, float(eStart), float(lStart), float(eEnd), float(lEnd), int(passangers)))
 			i += 1
 
 		return requests

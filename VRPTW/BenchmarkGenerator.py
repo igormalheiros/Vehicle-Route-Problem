@@ -9,10 +9,15 @@ def generateRequests(graph, n):
 	requests = []
 	for i in range(1, n+1):
 		route = random.choice(graph.keys())
-		startTime = random.randrange(8*60,20*60,60)
-		requests.append(SimpleRequest(i, route[0], route[1], startTime, startTime+(graph[route]), random.randint(1,8)))
+		eStart = random.randrange(8*60,20*60,60)
+		lStart = eStart + random.randrange(0,180)
+		eEnd = eStart+(graph[route])
+		lEnd = (lStart + graph[route]) + random.randrange(0,180)
+
+		requests.append(Request(i, route[0], route[1], eStart, lStart, eEnd, lEnd, random.randint(1,8)))
 
 	return requests
+
 graphFile = readInput("IrelandGraph.txt")
 graph = graphFile.buildGraph()
 

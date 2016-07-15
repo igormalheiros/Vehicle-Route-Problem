@@ -28,7 +28,7 @@ def objFunction(string):
 		for r in assigns[c]:
 			#Check if the car is in the correct position on time and if it is possible reach the endLocation in time
 			if ( (r.startLocation == cars[c-1].position) and
-				(checkTimeWindow(r, graph[(r.startLocation, r.endLocation)])) and
+				 (checkTimeWindow(r, graph[(r.startLocation, r.endLocation)])) and
 				 (timeStart <= r.eStart) and
 				 (int(r.passengers) <= int(cars[c-1].capacity)) ):
 
@@ -57,8 +57,8 @@ def measure(string):
 		timeStart = 0
 		for r in assigns[c]:
 			#Check if the car is in the correct position on time and if it is possible reach the endLocation in time
-			if ( (r.startLocation == cars[c-1].position) and
-				(checkTimeWindow(r, graph[(r.startLocation, r.endLocation)])) and
+			if ( ( r.startLocation == cars[c-1].position) and
+				 ( checkTimeWindow(r, graph[(r.startLocation, r.endLocation)])) and
 				 ( timeStart <= r.eStart) and
 				 ( int(r.passengers) <= int(cars[c-1].capacity))):
 
@@ -66,7 +66,6 @@ def measure(string):
 				cars[c-1].position = r.endLocation
 				accepted[c].append(r)
 				carsRoute[c].append(r)
-				
 			else:
 				decline.append(r)
 
@@ -76,9 +75,9 @@ def measure(string):
 
 carsFile = readInput("20cars.txt")
 graphFile = readInput("IrelandGraph.txt")
-requestsFile = readInput("50requests2.txt")
+requestsFile = readInput("50requests.txt")
 graph = graphFile.buildGraph()
-requests = requestsFile.buildSimpleRequests()
+requests = requestsFile.buildRequests()
 carPos = carsFile.buildCarsPositions()
 
 i = 0
@@ -88,8 +87,8 @@ for r in requests:
 
 #GA parameters
 nReq = len(requests)
-population = 600
-breeds = 1000
+population = 1000
+breeds = 500
 variability = len(carPos)
 mutation = 0.3
 copyFraction = 0.3
@@ -107,9 +106,10 @@ for r in requests:
 
 #run GA
 test = GA(nReq, population, breeds, variability, mutation, copyFraction, objFunction)
-best = test.run()
+best = [11, 3, 6, 15, 20, 20, 16, 5, 15, 12, 13, 17, 18, 1, 7, 9, 13, 12, 13, 4, 9, 7, 6, 12, 20, 10, 11, 7, 13, 6, 2, 2, 5, 20, 19, 6, 8, 13, 18, 20, 3, 16, 2, 6, 13, 12, 8, 10, 15, 1]
 #best = [16,17,4,10,11,1,1,14,3,6,9,7,15,1,17,18,16,1,2,1,10,14,1,7,20,19,16,15,1,1,1,3,1,1,5,15,1,1,9,20,8,12,1,1,1,11,15,4,12,1]
 #best = [16, 6, 13, 10, 9, 11, 12, 4, 3, 17, 9, 16, 15, 6, 6, 14, 7, 13, 2, 18, 10, 1, 6, 16, 15, 19, 7, 20, 17, 7, 16, 12, 20, 2, 5, 18, 15, 11, 8, 13, 4, 3, 15, 1, 20, 7, 8, 17, 6, 12]
+#best = [11, 3, 7, 15, 10, 10, 16, 3, 10, 13, 1, 6, 18, 1, 7, 9, 14, 13, 6, 4, 18, 20, 1, 10, 6, 19, 5, 20, 14, 1, 2, 2, 8, 5, 15, 16, 15, 15, 3, 7, 10, 8, 18, 8, 7, 13, 12, 10, 17, 19]
 #Outputs
 
 #Benchmark distribution
