@@ -56,21 +56,20 @@ def checkTimeWindow(req, cost):
 	lStart = req.lStart
 	eEnd = req.eEnd
 	lEnd = req.lEnd
+	w = req.extraTime
 
-	return ( ( eEnd <= (eStart+cost) <= lEnd) or
-			 ( eEnd <= (lStart+cost) <= lEnd) )
+	return ( ( eEnd <= (eStart+cost+w) <= lEnd) or
+			 ( eEnd <= (lStart+cost+w) <= lEnd) )
 
 def objFunction(string):
 
 	cars = initialize()
 
 	#split the requests by each car
-	assigns = {}
+	assigns = {key:[] for key in xrange(1,variability+1)}
+
 	for i in xrange(len(string)):
-		if(string[i] in assigns):
-			assigns[string[i]].append(requests[i])
-		else:
-			assigns[string[i]] = [requests[i]]
+		assigns[string[i]].append(requests[i])
 
 	score = 1
 	for c in assigns:
@@ -80,15 +79,15 @@ def objFunction(string):
 			if ( (r.startLocation == cars[c-1].position) and
 				 (checkTimeWindow(r, graph[(r.startLocation, r.endLocation)])) and
 				 (timeStart <= r.lStart) and
-				 (int(r.passengers) <= int(cars[c-1].capacity)) ):
+				 (r.passengers <= cars[c-1].capacity) ):
 
-				score = score + 1
+				score += 1
 				cars[c-1].position = r.endLocation
 
 				if ( (r.eStart < timeStart) and 
-				     (r.eEnd <= (timeStart+graph[(r.startLocation, r.endLocation)]) <= r.lEnd) ):
+				     (r.eEnd <= (timeStart+r.extraTime+graph[(r.startLocation, r.endLocation)]) <= r.lEnd) ):
 
-					timeStart += graph[(r.startLocation, r.endLocation)]
+					timeStart += graph[(r.startLocation, r.endLocation)] + r.extraTime
 
 				else:
 					timeStart = r.eEnd
@@ -100,12 +99,10 @@ def measure(string):
 	carsRoute = {key.indx:[] for key in cars}
 
 	#split the requests by each car
-	assigns = {}
+	assigns = {key:[] for key in xrange(1,variability+1)}
+
 	for i in xrange(len(string)):
-		if(string[i] in assigns):
-			assigns[string[i]].append(requests[i])
-		else:
-			assigns[string[i]] = [requests[i]]
+		assigns[string[i]].append(requests[i])
 
 	decline = []
 	accepted = {key: [] for key in string}
@@ -124,9 +121,9 @@ def measure(string):
 				carsRoute[c].append(r)
 
 				if ( (r.eStart < timeStart) and 
-				   (r.eEnd <= (timeStart+graph[(r.startLocation, r.endLocation)]) <= r.lEnd) ):
+				   (r.eEnd <= (timeStart+r.extraTime+graph[(r.startLocation, r.endLocation)]) <= r.lEnd) ):
 
-					timeStart += graph[(r.startLocation, r.endLocation)]
+					timeStart += (graph[(r.startLocation, r.endLocation)] + r.extraTime)
 					
 				else:
 					timeStart = r.eEnd
@@ -138,86 +135,99 @@ def measure(string):
 	return(carsRoute,accepted,decline)
 
 #Cars starts posistions, graph and request files
+#carsList = ["Tests/50Requests/10cars.txt","Tests/50Requests/20cars.txt","Tests/50Requests/30cars.txt","Tests/50Requests/40cars.txt"]
+carsList = ["Tests/500Requests/400cars.txt"]
+data = []
 
-carsFile = readInput("20cars.txt")
-graphFile = readInput("IrelandGraph.txt")
-requestsFile = readInput("50requests.txt")
-graph = graphFile.buildGraph()
-requests = requestsFile.buildRequests()
-carPos = carsFile.buildCarsPositions()
-
-#GA parameters
-nReq = len(requests)
-population = 200
-breeds = 600
-variability = len(carPos)
-mutation = 0.3
-copyFraction = 0.3
-
-dicHour = {key : 0 for key in xrange(8,20)}
-dicDepart = {key[0]: 0 for key in graph.keys()}
-dicArriv = {key[0]: 0 for key in graph.keys()}
-dicPassagenrs = {key : 0 for key in xrange(1,9)}
-
-for r in requests:
-	dicHour[r.eStart/60] += 1
-	dicDepart[r.startLocation] += 1
-	dicPassagenrs[r.passengers] += 1
-	dicArriv[r.endLocation] += 1
-
-#run GA
-test = GA(nReq, population, breeds, variability, mutation, copyFraction, objFunction)
-best = [11, 3, 16, 15, 18, 17, 16, 15, 2, 5, 13, 6, 19, 1, 7, 9, 13, 5, 13, 8, 12, 5, 17, 7, 18, 2, 12, 14, 3, 2, 20, 20, 4, 12, 7, 20, 6, 15, 19, 4, 5, 4, 16, 2, 7, 1, 11, 10, 6, 19]
-#best = [19, 3, 4, 6, 9, 3, 1, 7, 11, 12, 13, 6, 18, 16, 7, 19, 4, 6, 3, 12, 19, 20, 15, 14, 8, 7, 4, 18, 14, 9, 2, 1, 8, 18, 7, 14, 5, 6, 18, 20, 20, 10, 12, 10, 12, 13, 5, 1, 17, 1]
-#Outputs
-
-#Benchmark distribution
-print("\n>>>> HOURS <<<<")
-for k in dicHour.keys():
-	print ("%d -> %d" % (k, dicHour[k]))
-
-print("\n>>>> DEPARTURE <<<<")
-
-for k in dicDepart.keys():
-	print ("%s -> %d" % (k, dicDepart[k]))
-
-print("\n>>>> ARRIVED <<<<")
-for k in dicArriv.keys():
-	print ("%s -> %d" % (k, dicArriv[k]))
-
-print("\n>>>> PASSAENGERS <<<<")
-for k in dicPassagenrs.keys():
-	print ("%d -> %d" % (k, dicPassagenrs[k]))
-
-#Best Results
-print("\n>>>> BEST ASSIGMENT <<<< \n%s" % best)
-(cars, accepteds, declines) = measure(best)
-
-notUsed = 0
-used = []
-print("\n>>>> CARS TOURS <<<<\n")
-for c in cars:
-	print("*** CAR %d:" % c)
-	if(cars[c] == []):
-		notUsed += 1
-	else:
-		used.append(c)
-	for r in cars[c]:
-		print("Req %d: %s to %s" % (r.indx, r.startLocation, r.endLocation))
-	print
-
-print("\n>>>> ACCEPTED REQUISITIONS <<<<\n")
-for c in accepteds:
-	for acc in accepteds[c]:
-		print("%s was possible to car %s" % (acc,c))
+for p in carsList:
+	for a in xrange(1):
+		carsFile = readInput(p)
+		graphFile = readInput("IrelandGraph.txt")
+		requestsFile = readInput("Tests/500Requests/500requestsTimeWaste.txt")
+		graph = graphFile.buildGraph()
+		requests = requestsFile.buildRequests()
+		carPos = carsFile.buildCarsPositions()
 
 
-print("\n>>>> NOT ACCEPTED REQUISITIONS <<<<\n")
-for d in declines:
-	print("%s was not possible" % d)
-print("\nTotal of accepted requisitions: %d/%d" % ((len(best)-len(declines)), len(best)))
-print("Cars used %s %d/%d" % (Set(used), (len(carPos)-notUsed), len(carPos)) )
+		for r in requests:
+			print(r)
+		#GA parameters
+		nReq = len(requests)
+		population = 50
+		breeds = 10
+		variability = len(carPos)
+		mutation = 0.3
+		copyFraction = 0.4
 
-'''
-Request 10: Kinsale to Limerick [18:00,20:35] [20:01,21:16] with 7 passengers was possible to car 5
-Request 18: Limerick to Dingle [19:00,21:16] [21:23,21:39] with 5 passengers was possible to car 5'''
+		dicHour = {key : 0 for key in xrange(8,20)}
+		dicDepart = {key[0]: 0 for key in graph.keys()}
+		dicArriv = {key[0]: 0 for key in graph.keys()}
+		dicPassagenrs = {key : 0 for key in xrange(1,9)}
+
+		for r in requests:
+			dicHour[r.eStart/60] += 1
+			dicDepart[r.startLocation] += 1
+			dicPassagenrs[r.passengers] += 1
+			dicArriv[r.endLocation] += 1
+
+		#run GA
+		test = GA(nReq, population, breeds, variability, mutation, copyFraction, objFunction)
+		best = test.run()
+		#best = (0,[6, 6, 1, 2, 17, 7, 5, 5, 16, 14, 18, 5, 19, 10, 5, 20, 16, 10, 1, 5, 14, 16, 16, 1, 16, 4, 14, 18, 7, 9, 13, 15, 11, 18, 3, 20, 11, 7, 2, 6, 16, 15, 17, 11, 1, 5, 7, 19, 13, 10])
+		#Outputs
+
+		#Benchmark distribution
+		print("\n>>>> HOURS <<<<")
+		for k in dicHour.keys():
+			print ("%d -> %d" % (k, dicHour[k]))
+
+		print("\n>>>> DEPARTURE <<<<")
+
+		for k in dicDepart.keys():
+			print ("%s -> %d" % (k, dicDepart[k]))
+
+		print("\n>>>> ARRIVED <<<<")
+		for k in dicArriv.keys():
+			print ("%s -> %d" % (k, dicArriv[k]))
+
+		print("\n>>>> PASSAENGERS <<<<")
+		for k in dicPassagenrs.keys():
+			print ("%d -> %d" % (k, dicPassagenrs[k]))
+
+		#Best Results
+		print("\n>>>> BEST ASSIGMENT <<<< \n%s" % best[1])
+		(cars, accepteds, declines) = measure(best[1])
+
+		notUsed = 0
+		used = []
+		print("\n>>>> CARS TOURS <<<<\n")
+		for c in cars:
+			print("*** CAR %d:" % c)
+			if(cars[c] == []):
+				notUsed += 1
+			else:
+				used.append(c)
+			for r in cars[c]:
+				print("Req %d: %s to %s" % (r.indx, r.startLocation, r.endLocation))
+			print
+
+		print("\n>>>> ACCEPTED REQUISITIONS <<<<\n")
+		for c in accepteds:
+			for acc in accepteds[c]:
+				print("%s was possible to car %s" % (acc,c))
+
+
+		print("\n>>>> NOT ACCEPTED REQUISITIONS <<<<\n")
+		for d in declines:
+			print("%s was not possible" % d)
+		print("\nTotal of accepted requisitions: %d/%d" % ((len(best[1])-len(declines)), len(best[1])))
+		print("Iteration: %d" % best[0])
+		print("Cars used %s %d/%d" % (Set(used), (len(carPos)-notUsed), len(carPos)) )
+
+		'''
+		Request 10: Kinsale to Limerick [18:00,20:35] [20:01,21:16] with 7 passengers was possible to car 5
+		Request 18: Limerick to Dingle [19:00,21:16] [21:23,21:39] with 5 passengers was possible to car 5'''
+		data.append( (best[0], ((len(best[1])-len(declines)), len(best[1]))) )
+
+for d in data:
+	print("%s %s" % (d[0],d[1]) )

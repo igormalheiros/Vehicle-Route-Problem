@@ -37,18 +37,22 @@ class readInput:
 		t = self.txt.readlines()
 		i = 1
 		for line in t:
-			(source, target, eStart, lStart, eEnd, lEnd, passangers) = line.split()
+			(source, target, eStart, lStart, eEnd, lEnd, extraTime, passangers) = line.split()
 			eStart = eStart.split(":")
 			lStart = lStart.split(":")
 			eEnd = eEnd.split(":")
 			lEnd = lEnd.split(":")
+			extraTime = extraTime.split(":")
 			eStart = int(eStart[0])*60 + int(eStart[1])
 			lStart = int(lStart[0])*60 + int(lStart[1])
 			eEnd = int(eEnd[0])*60 + int(eEnd[1])
 			lEnd = int(lEnd[0])*60 + int(lEnd[1])
-			requests.append(Request(i, source, target, float(eStart), float(lStart), float(eEnd), float(lEnd), int(passangers)))
+			extraTime = int(extraTime[0])*60 + int(extraTime[1])
+
+			requests.append(Request(i, source, target, float(eStart), float(lStart), float(eEnd), float(lEnd), float(extraTime), int(passangers)))
 			i += 1
 
+		requests.sort(key=lambda x : x.eStart)
 		return requests
 
 	def buildCarsPositions(self):
@@ -57,6 +61,6 @@ class readInput:
 		t = self.txt.readlines()
 		for line in t:
 			(position, capacity) = line.split()
-			cars.append(Car(i,position, capacity))
+			cars.append(Car(i,position, int(capacity)))
 			i += 1
 		return cars

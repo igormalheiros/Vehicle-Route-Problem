@@ -1,5 +1,7 @@
 import random
+import time
 from operator import attrgetter
+from operator import itemgetter
 
 #Class of individuals
 class Individual:
@@ -37,10 +39,7 @@ class GA:
 		self.totalScore = 0
 
 	def generateIndividual(self):
-		gene = []
-		for i in xrange(self.geneSize):
-			gene.append(random.randint(1, self.variability))
-		return Individual(gene)
+		return Individual([random.randint(1,self.variability) for i in xrange(self.geneSize)])
 
 	def initializePopulation(self):
 		return [self.generateIndividual() for x in xrange(self.populationSize)]
@@ -59,13 +58,20 @@ class GA:
 			if(r < total):
 				return i
 
+	def tournamentSelection(self, population):
+		c1 = random.choice(population)
+		c2 = random.choice(population)
+		while(c1 == c2):
+			c2 = random.choice(population)
+		return c1 if c1.score >= c2.score else c2
+
 	def copy(self, population):
 		nCopy = int((1.0-self.fraction) * self.populationSize)
 		copyPopulation = [p for p in population]
 		nextBreed = []
 
 		for i in xrange(nCopy):
-			indiv = self.roulleteSelection(copyPopulation)
+			indiv = self.tournamentSelection(copyPopulation)
 			nextBreed.append(indiv)
 			copyPopulation.remove(indiv)
 
@@ -75,10 +81,9 @@ class GA:
 		individual = []
 		for i in range(len(indiv1)):
 			bit = random.randint(0,1)
-			if(bit == 0):
-				individual.append(indiv1[i])
-			else:
-				individual.append(indiv2[i])
+
+			individual.append(indiv1[i]) if (bit == 0) else individual.append(indiv2[i])
+				
 		return Individual(individual)
 
 	def onePoint(self, indiv1, indiv2):
@@ -88,11 +93,11 @@ class GA:
 		nChildrens = int(self.fraction * self.populationSize)
 
 		for i in xrange(nChildrens):
-			parent1 = self.roulleteSelection(population)
-			parent2 = self.roulleteSelection(population)
+			parent1 = self.tournamentSelection(population)
+			parent2 = self.tournamentSelection(population)
 
 			while(parent2 == parent1):
-				parent2 = self.roulleteSelection(population)
+				parent2 = self.tournamentSelection(population)
 
 			nextBreed.append(self.nPoint(parent1, parent2))
 
@@ -125,21 +130,30 @@ class GA:
 		print("------Best on First Breed------")
 		print(max(p, key=attrgetter('score')))
 
-		while(k < self.breed):
-			k = k + 1
+		print("------BREEDS------")
+
+		timeout = time.time()+60*5
+
+		while(time.time() < timeout):
+			k += 1
 			c = self.copy(p)
 			p = self.crossover(p, c)
 			p = self.mutate(p)
 			p = self.evaluate(p)
 			b = max(p, key=attrgetter('score'))
 			print("%d %s" % (k,b))
-			bestOnBreed.append(b)
+			bestOnBreed.append((k,b))
 
 		print("------Last Breed------")
 		for i in p:
 			print(i)
 
 		print("FINAL RESULT")
-		best = max(bestOnBreed, key=attrgetter('score'))
-		print(best)
+		best = bestOnBreed[0]
+
+		for i in bestOnBreed:
+			if (i[1].score > best[1].score):
+				best = i
+
+		print("Generation:%d - Score: %s" % (best[0],best[1]))
 		return best
